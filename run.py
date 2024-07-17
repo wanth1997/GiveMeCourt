@@ -7,12 +7,16 @@ from selenium.webdriver.support import expected_conditions as EC
 from datetime import datetime, timedelta, date
 from time import sleep
 
+from loguru import logger as log
+
 # 启动Chrome并附加到现有会话
 chrome_options = Options()
-chrome_options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")  # 确保端口号正确
+chrome_options.add_experimental_option(
+    "debuggerAddress", "127.0.0.1:9222"
+)  # 确保端口号正确
 
 driver = webdriver.Chrome(options=chrome_options)
-print("当前URL: ", driver.current_url)
+log.info("当前URL: ", driver.current_url)
 
 
 def go_to_site(month: int, day: int, session: int):
@@ -36,24 +40,31 @@ def get_available():
         ret.append(i)
         if len(ret) >= 2:
             return ret
-    print(ret)
+    log.info(ret)
     return ret
+
+
+def book_night(index):
+    go_to_site(month, day, session)
+    xpath = f"//table/tbody/tr[{index}]/td[4]/img"
+    try:
+        element = driver.find_element(By.XPATH, xpath)
+    except Exception as e:
+        log.error(e)
+    element.click()
+    try:
+        WebDriverWait(driver, 10).until(EC.alert_is_present())
+        alert = driver.switch_to.alert
+        log.info(alert.text)
+        alert.accept()
+
+    except Exception as e:
+        log.error(f"An error occurred: {e}")
 
 
 def book_available(indexes):
     for i in indexes:
-        go_to_site(month, day, session)
-        xpath = f"/html/body/table[1]/tbody/tr[3]/td/div/form/table/tbody/tr/td/span/div/table/tbody/tr[2]/td/span/table/tbody/tr[{i}]/td[4]/img"
-        element = driver.find_element(By.XPATH, xpath)
-        element.click()
-        try:
-            WebDriverWait(driver, 10).until(EC.alert_is_present())
-            alert = driver.switch_to.alert
-            print(alert.text)
-            alert.accept()
-
-        except Exception as e:
-            print(f"An error occurred: {e}")
+        book_night(i)
 
 
 month = 7
@@ -70,11 +81,9 @@ while True:
         sleep(0.01)
         continue
     try:
-        go_to_site(month, day, session)
-        indexes = [i for i in range(2, 22, 5)]
-        book_available(indexes)
+        book_night(7)
         sleep(5)
     except Exception as e:
-        print(e)
+        log.error(e)
         sleep(0.01)
-        print("Retry!")
+        log.error("Retry!")
