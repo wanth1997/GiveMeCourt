@@ -1,0 +1,16 @@
+def get_available():
+    this_block = False
+    go_to_site(month, day, session)
+    ret = []
+    for i in range(2, 22, 5):
+        xpath = f"/html/body/table[1]/tbody/tr[3]/td/div/form/table/tbody/tr/td/span/div/table/tbody/tr[2]/td/span/table/tbody/tr[{i}]/td[4]/img"
+        element = driver.find_element(By.XPATH, xpath)
+        value = element.get_attribute("src")
+        if "place01" not in value or this_block:
+            continue
+        this_block = True
+        ret.append(i)
+        if len(ret) >= 2:
+            return ret
+    log.info(ret)
+    return ret
